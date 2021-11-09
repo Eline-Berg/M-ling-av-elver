@@ -7,7 +7,7 @@
 #define echoPIN 18
 #define discardValue 3 //beskytter slik at den ikke kødder seg. Fjerner forje måling og tar på nytt
 #define sequence 5  //fem målinger blir tatt
-#define totalHeight 30 
+#define totalHeight 20 
 
 float readingFlow ()
 {
