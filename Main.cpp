@@ -26,8 +26,8 @@ char* str_lat = (char*)malloc(sizeof(char) * 10);
 char* str_lng = (char*)malloc(sizeof(char) * 10);
 char* context = (char*)malloc(sizeof(char) * 30);
 
-float lat = 50.132;
-float lng = 39.322;
+float lat = 50.132; //Placeholder
+float lng = 39.322; //Placeholder
 
 static const int RXPin = 4, TXPin = 3;
 static const uint32_t GPSBaud = 9600;
