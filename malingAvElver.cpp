@@ -1,4 +1,3 @@
-#include <CircusESP32Lib.h>
 #include <analogWrite.h>
 
 //--PINS----//
@@ -7,7 +6,7 @@
 #define echoPIN 18
 #define discardValue 3 //beskytter slik at den ikke kødder seg. Fjerner forje måling og tar på nytt
 #define sequence 5  //fem målinger blir tatt
-#define totalHeight 20 
+#define totalHeight 30 
 
 float readingFlow ()
 {
@@ -17,9 +16,14 @@ float readingFlow ()
   digitalWrite(ultraPIN, HIGH); //blir så HIGH etter 5 sek
   delayMicroseconds(10);
   digitalWrite(ultraPIN, LOW);
-  pinMode(echoPin, INPUT);
-  return pulseIn(echoPin, HIGH);
+  pinMode(echoPIN, INPUT);
+  return pulseIn(echoPIN, HIGH);
 }
+
+int prevAvg;
+int sum;
+int average;
+int counter = 0;
 
 int returnAverage() //gjennomsnittsfunksjon
 { 
