@@ -1,5 +1,7 @@
 #include <analogWrite.h>
 #include "UbidotsEsp32Mqtt.h"
+#include <TinyGPS++.h>
+#include <SoftwareSerial.h>
 
 #define uS_TO_MIN_FACTOR 1000000  //Conversion factor for micro seconds to seconds
 
@@ -15,10 +17,24 @@ RTC_DATA_ATTR int average;
 RTC_DATA_ATTR int counter = 0;
 
 const char *UBIDOTS_TOKEN = "BBFF-8t47OTF4vv2Mjv4KNYOsGAP2cENC6z";  // Put here your Ubidots TOKEN
-const char *WIFI_SSID = "CovidTransmitter";      // Put here your Wi-Fi SSID
-const char *WIFI_PASS = "karlerkul";      // Put here your Wi-Fi password
-const char *DEVICE_LABEL = "ESP32";   // Put here your Device label to which data  will be published
-const char *VARIABLE_LABEL = "Vannmengde"; // Put here your Variable label to which data  will be published
+const char *WIFI_SSID = "Jonas Surface Pro";      // Put here your Wi-Fi SSID
+const char *WIFI_PASS = "123454321";      // Put here your Wi-Fi password
+const char *DEVICE_LABEL = "ESP32";
+const char *VARIABLE_LABEL1 = "Vann.mgd & Pos."; // Put here your Variable label to which data  will be published
+
+char* str_lat = (char*)malloc(sizeof(char) * 10);
+char* str_lng = (char*)malloc(sizeof(char) * 10);
+char* context = (char*)malloc(sizeof(char) * 30);
+
+float lat = 50.132;
+float lng = 39.322;
+
+static const int RXPin = 4, TXPin = 3;
+static const uint32_t GPSBaud = 9600;
+
+TinyGPSPlus gps;
+
+SoftwareSerial ss(RXPin, TXPin);
 
 const int PUBLISH_FREQUENCY = 5000; // Update rate in milliseconds
 
@@ -36,7 +52,7 @@ Ubidots ubidots(UBIDOTS_TOKEN);
 #define totalHeight 30 
 
 void setup(){
-  Serial.begin(9600);
+  Serial.begin(115200);
   delay(1000); //Take some time to open up the Serial Monitor
 
   //Increment boot number and print it every reboot
@@ -50,6 +66,14 @@ void setup(){
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_MIN_FACTOR);
   Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +
   " Minutes");
+
+  ss.begin(GPSBaud);
+
+  gps.encode(ss.read());
+    if (gps.location.isUpdated()){
+      lat = gps.location.lat();
+      lng = gps.location.lng();
+    }
   
   ubidots.setDebug(true);  // uncomment this to make debug messages available
   ubidots.connectToWifi(WIFI_SSID, WIFI_PASS);
@@ -59,12 +83,21 @@ void setup(){
 
   timer = millis();
 
+  sprintf(str_lat, "%f", lat);
+  sprintf(str_lng, "%f", lng);
+
+  ubidots.addContext("lat", str_lat);
+  ubidots.addContext("lng", str_lng);
+  ubidots.getContext(context);
+
   if (!ubidots.connected())
   {
     ubidots.reconnect();
   }
-  ubidots.add(VARIABLE_LABEL, average); // Insert your variable Labels and the value to be sent
+  ubidots.add(VARIABLE_LABEL1, average, context); // Insert your variable Labels and the value to be sent
+ // ubidots.add(VARIABLE_LABEL2, 2, context);
   ubidots.publish(DEVICE_LABEL);
+  
   //Go to sleep now
   esp_deep_sleep_start();
 }
