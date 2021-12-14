@@ -1,3 +1,5 @@
+#include <DNSServer.h>
+
 #include <analogWrite.h>
 #include "UbidotsEsp32Mqtt.h"
 #include <TinyGPS++.h>
@@ -11,9 +13,9 @@ RTC_DATA_ATTR int Critical_Value = 10;
 RTC_DATA_ATTR int Current_Value = 5;
 RTC_DATA_ATTR int TIME_TO_SLEEP = 10;
 
-RTC_DATA_ATTR int prevAvg;
-RTC_DATA_ATTR int sum;
-RTC_DATA_ATTR int average;
+RTC_DATA_ATTR float prevAvg;
+RTC_DATA_ATTR float sum;
+RTC_DATA_ATTR float average;
 RTC_DATA_ATTR int counter = 0;
 
 const char *UBIDOTS_TOKEN = "BBFF-8t47OTF4vv2Mjv4KNYOsGAP2cENC6z";  // Put here your Ubidots TOKEN
@@ -26,10 +28,10 @@ char* str_lat = (char*)malloc(sizeof(char) * 10);
 char* str_lng = (char*)malloc(sizeof(char) * 10);
 char* context = (char*)malloc(sizeof(char) * 30);
 
-float lat = 50.132; //Placeholder
-float lng = 39.322; //Placeholder
+RTC_DATA_ATTR float lat;
+RTC_DATA_ATTR float lng;
 
-static const int RXPin = 4, TXPin = 3;
+static const int RXPin = 26, TXPin = 25;
 static const uint32_t GPSBaud = 9600;
 
 TinyGPSPlus gps;
@@ -52,29 +54,34 @@ Ubidots ubidots(UBIDOTS_TOKEN);
 #define totalHeight 30 
 
 void setup(){
-  Serial.begin(115200);
+  Serial.begin(9600);
+  ss.begin(GPSBaud);
+  
   delay(1000); //Take some time to open up the Serial Monitor
 
   //Increment boot number and print it every reboot
   ++bootCount;
+  Serial.println(lat);
+  Serial.println(lng);
   Serial.println("Boot number: " + String(bootCount));
   Serial.print("Distance is ");
   Serial.println(returnAverage());
 
   Sleep();
-
+  
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_MIN_FACTOR);
   Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +
   " Minutes");
 
-  ss.begin(GPSBaud);
 
+  delay(5000);
   gps.encode(ss.read());
     if (gps.location.isUpdated()){
+      Serial.println("GPS UPDATEEEEER");
       lat = gps.location.lat();
       lng = gps.location.lng();
     }
-  
+ Serial.println(gps.location.lat());
   ubidots.setDebug(true);  // uncomment this to make debug messages available
   ubidots.connectToWifi(WIFI_SSID, WIFI_PASS);
   ubidots.setCallback(callback);
@@ -99,7 +106,7 @@ void setup(){
   ubidots.publish(DEVICE_LABEL);
   
   //Go to sleep now
-  esp_deep_sleep_start();
+  //esp_deep_sleep_start();
 }
 
 void Sleep(){
@@ -128,12 +135,12 @@ float readingFlow ()
   
 }
 
-int returnAverage() //gjennomsnittsfunksjon
+float returnAverage() //gjennomsnittsfunksjon
 { 
  prevAvg = average;
  sum = 0;
  for (int i = 0; i < sequence; i++){
-      sum = sum + (0.01723 * readingFlow()); //Ganger med 0.1723 for å gjøre om til millimeter
+      sum = sum + (0.01723 * readingFlow());//Ganger med 0.1723 for å gjøre om til millimeter
       delay(50); //Pause
       if (i == (sequence - 1)){
         average = sum / sequence;
@@ -147,6 +154,7 @@ int returnAverage() //gjennomsnittsfunksjon
       }
     }
 } 
+
 void callback(char *topic, byte *payload, unsigned int length)
 {
   Serial.print("Message arrived [");
@@ -158,4 +166,18 @@ void callback(char *topic, byte *payload, unsigned int length)
   }
   Serial.println();
 }
-void loop(){}
+
+void loop(){
+  while (ss.available() > 0){
+    gps.encode(ss.read());
+    if (gps.location.isUpdated()){
+      Serial.print("Latitude= "); 
+      Serial.print(gps.location.lat(), 6);
+      Serial.print(" Longitude= "); 
+      Serial.println(gps.location.lng(), 6);
+      lng = gps.location.lng();
+      lat = gps.location.lat();
+      esp_deep_sleep_start();
+    }
+  }
+}
