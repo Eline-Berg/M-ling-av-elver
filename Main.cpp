@@ -30,7 +30,8 @@ RTC_DATA_ATTR char* context = (char*)malloc(sizeof(char) * 30);
 RTC_DATA_ATTR float lat; //Placeholder
 RTC_DATA_ATTR float lng; //Placeholder
 
-static const int RXPin = 26, TXPin = 25;
+static const int RXPin = 26;
+static const int TXPin = 25;
 static const uint32_t GPSBaud = 9600;
 
 TinyGPSPlus gps;
@@ -46,7 +47,7 @@ Ubidots ubidots(UBIDOTS_TOKEN);
 
 //--PINS----//
 
-#define ultraPIN 5 //PWM
+#define triggerPIN 5 //PWM
 #define echoPIN 18
 #define discardValue 3 //beskytter slik at den ikke kødder seg. Fjerner forje måling og tar på nytt
 #define sequence 5  //fem målinger blir tatt
@@ -54,13 +55,13 @@ Ubidots ubidots(UBIDOTS_TOKEN);
 
 float readingFlow ()
 {
-  pinMode(ultraPIN, OUTPUT); //definerer den som en output
+  pinMode(triggerPIN, OUTPUT); //definerer den som en output
   pinMode(echoPIN, INPUT);
-  digitalWrite(ultraPIN, LOW); //starter på low
+  digitalWrite(triggerPIN, LOW); //starter på low
   delayMicroseconds(2);
-  digitalWrite(ultraPIN, HIGH); //blir så HIGH etter 5 sek
+  digitalWrite(triggerPIN, HIGH); //blir så HIGH etter 5 sek
   delayMicroseconds(10);
-  digitalWrite(ultraPIN, LOW);
+  digitalWrite(triggerPIN, LOW);
   return pulseIn(echoPIN, HIGH);
   
 }
