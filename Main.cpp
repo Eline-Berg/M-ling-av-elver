@@ -3,7 +3,7 @@
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 
-#define uS_TO_MIN_FACTOR 1000000  //Conversion factor for micro seconds to seconds
+#define uS_TO_MIN_FACTOR 1000000
 
 RTC_DATA_ATTR int bootCount = 0;
 
@@ -17,18 +17,18 @@ RTC_DATA_ATTR float sum;
 RTC_DATA_ATTR float average;
 RTC_DATA_ATTR int counter = 0;
 
-const char *UBIDOTS_TOKEN = "BBFF-8t47OTF4vv2Mjv4KNYOsGAP2cENC6z";  // Put here your Ubidots TOKEN
-const char *WIFI_SSID = "Jonas Surface Pro";      // Put here your Wi-Fi SSID
-const char *WIFI_PASS = "123454321";      // Put here your Wi-Fi password
+const char *UBIDOTS_TOKEN = "BBFF-8t47OTF4vv2Mjv4KNYOsGAP2cENC6z";
+const char *WIFI_SSID = "Jonas Surface Pro";
+const char *WIFI_PASS = "123454321";
 const char *DEVICE_LABEL = "ESP32";
-const char *VARIABLE_LABEL1 = "Vann.mgd & Pos."; // Put here your Variable label to which data  will be published
+const char *VARIABLE_LABEL1 = "Vann.mgd & Pos.";
 
 RTC_DATA_ATTR char* str_lat = (char*)malloc(sizeof(char) * 10);
 RTC_DATA_ATTR char* str_lng = (char*)malloc(sizeof(char) * 10);
 RTC_DATA_ATTR char* context = (char*)malloc(sizeof(char) * 30);
 
-RTC_DATA_ATTR float lat; //Placeholder
-RTC_DATA_ATTR float lng; //Placeholder
+RTC_DATA_ATTR float lat;
+RTC_DATA_ATTR float lng;
 
 static const int RXPin = 26;
 static const int TXPin = 25;
@@ -38,44 +38,43 @@ TinyGPSPlus gps;
 
 SoftwareSerial ss(RXPin, TXPin);
 
-const int PUBLISH_FREQUENCY = 5000; // Update rate in milliseconds
-
+const int PUBLISH_FREQUENCY = 5000;
 unsigned long timer;
-uint8_t analogPin = 34; // Pin used to read data from GPIO34 ADC_CH6.
+uint8_t analogPin = 34;
 
 Ubidots ubidots(UBIDOTS_TOKEN);
 
 //--PINS----//
 
-#define triggerPIN 5 //PWM
+#define triggerPIN 5
 #define echoPIN 18
-#define discardValue 3 //beskytter slik at den ikke kødder seg. Fjerner forje måling og tar på nytt
-#define sequence 5  //fem målinger blir tatt
+#define discardValue 3
+#define sequence 5
 #define totalHeight 30 
 
 float readingFlow ()
 {
-  pinMode(triggerPIN, OUTPUT); //definerer den som en output
+  pinMode(triggerPIN, OUTPUT);
   pinMode(echoPIN, INPUT);
-  digitalWrite(triggerPIN, LOW); //starter på low
+  digitalWrite(triggerPIN, LOW);
   delayMicroseconds(2);
-  digitalWrite(triggerPIN, HIGH); //blir så HIGH etter 5 sek
+  digitalWrite(triggerPIN, HIGH);
   delayMicroseconds(10);
   digitalWrite(triggerPIN, LOW);
   return pulseIn(echoPIN, HIGH);
   
 }
 
-float returnAverage() //gjennomsnittsfunksjon
+float returnAverage()
 { 
  prevAvg = average;
  sum = 0;
  for (int i = 0; i < sequence; i++){
-      sum = sum + (0.01723 * readingFlow());//Ganger med 0.1723 for å gjøre om til millimeter
+      sum = sum + (0.01723 * readingFlow());
       delay(50); //Pause
       if (i == (sequence - 1)){
         average = maxWaterLevel - (sum / sequence);
-        if (counter == 1 && abs(average - prevAvg) < discardValue){ //vannnivå og IKKE avstand fra sensor til vann
+        if (counter == 1 && abs(average - prevAvg) < discardValue){
           return average;
         }
         else if (counter == 0){
@@ -111,7 +110,7 @@ void callback(char *topic, byte *payload, unsigned int length)
 }
 
 void MQTT(){
-  ubidots.setDebug(true);  // uncomment this to make debug messages available
+  ubidots.setDebug(true);
   ubidots.connectToWifi(WIFI_SSID, WIFI_PASS);
   ubidots.setCallback(callback);
   ubidots.setup();
@@ -129,8 +128,7 @@ void MQTT(){
   {
     ubidots.reconnect();
   }
-  ubidots.add(VARIABLE_LABEL1, average, context); // Insert your variable Labels and the value to be sent
- // ubidots.add(VARIABLE_LABEL2, 2, context);
+  ubidots.add(VARIABLE_LABEL1, average, context);
   ubidots.publish(DEVICE_LABEL);
   esp_deep_sleep_start();
 }
@@ -139,9 +137,8 @@ void MQTT(){
 void setup(){
   Serial.begin(9600);
   ss.begin(GPSBaud);
-  delay(1000); //Take some time to open up the Serial Monitor
+  delay(1000);
 
-  //Increment boot number and print it every reboot
   ++bootCount;
   Serial.println("Boot number: " + String(bootCount));
   Current_Value = returnAverage();
