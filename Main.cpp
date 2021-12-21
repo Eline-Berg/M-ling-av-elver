@@ -9,6 +9,7 @@ RTC_DATA_ATTR float maxWaterLevel = 12;//høgden fra sensor ned til bunnen av el
 RTC_DATA_ATTR float Current_Value;//Siste målte nivå av vannstanden
 RTC_DATA_ATTR int TIME_TO_SLEEP;//Tiden ESP'en skal være i søvnmodus
 
+//Brukt i Returnaverage()
 RTC_DATA_ATTR float prevAvg;
 RTC_DATA_ATTR float sum;
 RTC_DATA_ATTR float average;
@@ -18,7 +19,7 @@ const char *UBIDOTS_TOKEN = "BBFF-8t47OTF4vv2Mjv4KNYOsGAP2cENC6z";  // Ubidots T
 const char *WIFI_SSID = "Hope";      // Wi-Fi SSID
 const char *WIFI_PASS = "hopehope";      // Wi-Fi password
 const char *DEVICE_LABEL = "ESP32";
-const char *VARIABLE_LABEL1 = "Vann.mgd & Pos."; // Put here your Variable label to which data  will be published
+const char *VARIABLE_LABEL1 = "Vann.mgd & Pos."; //Sett inn variabeletiketten din som data skal publiseres til
 
 RTC_DATA_ATTR char* str_lat = (char*)malloc(sizeof(char) * 10);
 RTC_DATA_ATTR char* str_lng = (char*)malloc(sizeof(char) * 10);
