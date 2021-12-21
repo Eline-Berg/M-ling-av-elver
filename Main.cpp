@@ -18,7 +18,7 @@ RTC_DATA_ATTR int counter = 0;
 const char *UBIDOTS_TOKEN = "BBFF-8t47OTF4vv2Mjv4KNYOsGAP2cENC6z";  // Ubidots TOKEN
 const char *WIFI_SSID = "Hope";      // Wi-Fi SSID
 const char *WIFI_PASS = "hopehope";      // Wi-Fi password
-const char *DEVICE_LABEL = "ESP32";
+const char *DEVICE_LABEL = "ESP32"; // Navn på enheten 
 const char *VARIABLE_LABEL1 = "Vann.mgd & Pos."; //Sett inn variabeletiketten din som data skal publiseres til
 
 RTC_DATA_ATTR char* str_lat = (char*)malloc(sizeof(char) * 10);
@@ -28,25 +28,24 @@ RTC_DATA_ATTR char* context = (char*)malloc(sizeof(char) * 30);
 RTC_DATA_ATTR float lat; //Placeholder
 RTC_DATA_ATTR float lng; //Placeholder
 
-static const int RXPin = 26, TXPin = 25;
+static const int RXPin = 26, TXPin = 25; // Settter RX og TX til pinne 26 og 25
 static const uint32_t GPSBaud = 9600;
 
-TinyGPSPlus gps;
+TinyGPSPlus gps; 
 
-SoftwareSerial ss(RXPin, TXPin);
+SoftwareSerial ss(RXPin, TXPin); // Gjør pinne 26 og 25 til RX og TX pin
 
 const int PUBLISH_FREQUENCY = 5000; // Opdateringsrate i millisekund
 
 unsigned long timer;
-uint8_t analogPin = 34; // Pin brukt til å lese fra GPIO34 ADC_CH6.
 
 Ubidots ubidots(UBIDOTS_TOKEN);
 
 //--PINS----//
 
-#define ultraPIN 5 //PWM
+#define ultraPIN 5 
 #define echoPIN 18
-#define discardValue 3 //beskytter slik at den ikke kødder seg. Fjerner forje måling og tar på nytt
+#define discardValue 3 //Beskytter slik at den ikke kødder seg. Fjerner siste måling og tar en ny.
 #define sequence 5  //fem målinger blir tatt
 #define totalHeight 30 
 #define uS_TO_MIN_FACTOR 60000000  // konverterer fra microsekund til minutt
@@ -97,7 +96,7 @@ void Sleep(){
   }
 }
 
-void callback(char *topic, byte *payload, unsigned int length)
+void callback(char *topic, byte *payload, unsigned int length) // Funksjon for å få tilbakemedling fra Ubidots.
 {
   Serial.print("Message arrived [");
   Serial.print(topic);
@@ -109,18 +108,19 @@ void callback(char *topic, byte *payload, unsigned int length)
   Serial.println();
 }
 
-void MQTT(){
+void MQTT(){  // Funksjon til å bruke MQTT til å sende data.
   ubidots.setDebug(true);  
-  ubidots.connectToWifi(WIFI_SSID, WIFI_PASS);
-  ubidots.setCallback(callback);
-  ubidots.setup();
+  ubidots.connectToWifi(WIFI_SSID, WIFI_PASS); // tilkobler wifi med wifi parameterne 
+  ubidots.setCallback(callback); // setter opp calbackfunsjonen 
+  ubidots.setup(); 
   ubidots.reconnect();
 
   timer = millis();
-  sprintf(str_lat, "%f", lat);
+  // Legger lat og lng inn som som char array
+  sprintf(str_lat, "%f", lat); 
   sprintf(str_lng, "%f", lng);
-
-  ubidots.addContext("lat", str_lat);
+  // Legger til lat og lng til context, som skal sendes med variabelen.
+  ubidots.addContext("lat", str_lat); 
   ubidots.addContext("lng", str_lng);
   ubidots.getContext(context);
 
@@ -128,27 +128,25 @@ void MQTT(){
   {
     ubidots.reconnect();
   }
-  ubidots.add(VARIABLE_LABEL1, average, context); // Insert your variable Labels and the value to be sent
- // ubidots.add(VARIABLE_LABEL2, 2, context);
-  ubidots.publish(DEVICE_LABEL);
+  ubidots.add(VARIABLE_LABEL1, average, context); // Legger til det som skal sendes opp til ubidots
+  ubidots.publish(DEVICE_LABEL); // Sender opp til ubidots 
 
-  Sleep();//Sjekker hvor lenge den skal såve
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_MIN_FACTOR);//Setter tiden ESP'en skal såve
-  esp_deep_sleep_start();//Setter ESP'en i søvnmodus
+  Sleep();  //Sjekker hvor lenge den skal sove
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_MIN_FACTOR); //Setter tiden ESP'en skal sove
+  esp_deep_sleep_start(); //Setter ESP'en i søvnmodus
 }
 
 
 void setup(){
-  // starter opp gps og seriel monitor
+  // starter opp gps og serial monitor
   Serial.begin(9600);
   ss.begin(GPSBaud);
   delay(1000); 
 
-  //Increment boot nummer og printer det
+  //Teller antall boot nummer og printer det
   ++bootCount;
-
-  //Henter inn Ultrasonisk sensor og printer
   Serial.println("Boot number: " + String(bootCount));
+  // Henter inn verdien fra sensoren og printer dette.
   Current_Value = returnAverage();
   Serial.print("Distance is ");
   Serial.println(Current_Value);
@@ -166,7 +164,7 @@ void loop(){
       Serial.print(gps.location.lat(), 6);
       Serial.print(" Longitude= "); 
       Serial.println(gps.location.lng(), 6);
-
+      // setter lng og lat til koordinatene som her hentet inn.
       lng = gps.location.lng();
       lat = gps.location.lat();
 
